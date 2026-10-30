@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="PawStayReservationReport"
+              pageWidth="842"
+              pageHeight="595"
+              orientation="Landscape"
+              columnWidth="802"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20"
+              whenNoDataType="AllSectionsNoDetail"
+              uuid="a86b2175-7f88-407c-bd60-eed7b602d839">
+
+    <property name="com.jaspersoft.studio.data.defaultdataadapter" value=""/>
+
+    <!--
+        Four-table JOIN:
+          reservations r
+          INNER JOIN customers c
+          INNER JOIN pets p
+          LEFT JOIN payments pay
+
+        Payments are aggregated by reservation so multiple payment records
+        do not create duplicate reservation rows.
+    -->
+    <queryString language="SQL"><![CDATA[
+        SELECT
+            r.reservation_id,
+            c.full_name AS customer_name,
+            c.phone AS customer_phone,
+            p.pet_name,
+            p.breed,
+            r.kennel_code,
+            r.accommodation_type,
+            r.check_in,
+            r.check_out,
+            r.status,
+            r.amount AS reservation_amount,
+            COALESCE(SUM(pay.amount), 0) AS paid_amount,
+            CASE
+                WHEN COALESCE(SUM(pay.amount), 0) >= r.amount THEN 'Paid'
+                WHEN COALESCE(SUM(pay.amount), 0) > 0 THEN 'Partial'
+                ELSE 'Unpaid'
+            END AS payment_status
+        FROM reservations r
+        INNER JOIN customers c
+            ON c.customer_id = r.customer_id
+        INNER JOIN pets p
+            ON p.pet_id = r.pet_id
+        LEFT JOIN payments pay
+            ON pay.reservation_id = r.reservation_id
+        GROUP BY
+            r.reservation_id,
+            c.full_name,
+            c.phone,
+            p.pet_name,
+            p.breed,
+            r.kennel_code,
+            r.accommodation_type,
+            r.check_in,
+            r.check_out,
+            r.status,
+            r.amount
+        ORDER BY r.check_in, r.reservation_id
+    ]]></queryString>
+
+    <field name="reservation_id" class="java.lang.Integer"/>
+    <field name="customer_name" class="java.lang.String"/>
+    <field name="customer_phone" class="java.lang.String"/>
+    <field name="pet_name" class="java.lang.String"/>
+    <field name="breed" class="java.lang.String"/>
+    <field name="kennel_code" class="java.lang.String"/>
+    <field name="accommodation_type" class="java.lang.String"/>
+    <field name="check_in" class="java.sql.Date"/>
+    <field name="check_out" class="java.sql.Date"/>
+    <field name="status" class="java.lang.String"/>
+    <field name="reservation_amount" class="java.math.BigDecimal"/>
+    <field name="paid_amount" class="java.math.BigDecimal"/>
+    <field name="payment_status" class="java.lang.String"/>
+
+    <variable name="TotalReservationAmount"
+              class="java.math.BigDecimal"
+              calculation="Sum">
+        <variableExpression><![CDATA[$F{reservation_amount}]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+
+    <variable name="TotalPaidAmount"
+              class="java.math.BigDecimal"
+              calculation="Sum">
+        <variableExpression><![CDATA[$F{paid_amount}]]></variableExpression>
+        <initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
+    </variable>
+
+    <title>
+        <band height="70">
+            <staticText>
+                <reportElement x="0" y="0" width="802" height="30" forecolor="#0C253D"
+                               uuid="bc0235d3-65fd-457a-8c2f-3670ab47838e"/>
+                <textElement>
+                    <font fontName="SansSerif" size="22" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PawStay | Reservation & Payment Report]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="0" y="36" width="802" height="18" forecolor="#607589"
+                               uuid="79d21633-fda7-4dc8-b00d-88c5a48517f3"/>
+                <textElement>
+                    <font size="10"/>
+                </textElement>
+                <text><![CDATA[Reservation, customer, pet and payment information joined from four database tables]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="30">
+            <staticText><reportElement x="0" y="0" width="35" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="1bf03fb6-e957-45c5-9610-3258cc491637"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[ID]]></text></staticText>
+            <staticText><reportElement x="35" y="0" width="125" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="d58ad159-2202-4169-a91f-50082adae270"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Customer]]></text></staticText>
+            <staticText><reportElement x="160" y="0" width="70" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="c90fda19-0543-4972-bf26-09171421d179"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Phone]]></text></staticText>
+            <staticText><reportElement x="230" y="0" width="75" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="e5570a03-3f32-408d-8c2b-3dd1120638c7"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Pet]]></text></staticText>
+            <staticText><reportElement x="305" y="0" width="90" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="ee303924-a51e-4e86-aafb-dc06c23a6fe9"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Breed]]></text></staticText>
+            <staticText><reportElement x="395" y="0" width="50" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="a81729ce-d9af-4d22-a62c-4a5f2abeb9eb"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Ken.] ]]> </text></staticText>
+            <staticText><reportElement x="445" y="0" width="72" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="60f73e17-3267-4082-8600-3859b005ae06"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Check-in]]></text></staticText>
+            <staticText><reportElement x="517" y="0" width="72" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="19e1fa5e-6a26-4a80-a6da-cdd62453dd7f"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Check-out]]></text></staticText>
+            <staticText><reportElement x="589" y="0" width="60" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="72a25082-0b58-46d0-957b-1cd7933d7c5e"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Status]]></text></staticText>
+            <staticText><reportElement x="649" y="0" width="52" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="ace3552a-26ee-4495-b752-d06c83ff6748"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Total]]></text></staticText>
+            <staticText><reportElement x="701" y="0" width="52" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="3d62ad54-a9d9-4fbd-bf02-27b8dcb1a8a4"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Paid]]></text></staticText>
+            <staticText><reportElement x="753" y="0" width="49" height="26" backcolor="#00AE9C" mode="Opaque" forecolor="#FFFFFF" uuid="b3b6f00f-6476-478b-9bb0-97b29836560e"/>
+                <textElement verticalAlignment="Middle"><font size="8" isBold="true"/></textElement><text><![CDATA[Pay]]></text></staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="24">
+            <textField><reportElement x="0" y="0" width="35" height="22" uuid="14e6744d-81ee-4fd2-a93a-e99d4b507b05"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{reservation_id}]]></textFieldExpression></textField>
+            <textField><reportElement x="35" y="0" width="125" height="22" uuid="f9f8aedc-511b-4a7d-aefa-54dc1a48ebe7"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{customer_name}]]></textFieldExpression></textField>
+            <textField><reportElement x="160" y="0" width="70" height="22" uuid="1f42718e-0d1d-4921-9a87-bd207d3e349f"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{customer_phone}]]></textFieldExpression></textField>
+            <textField><reportElement x="230" y="0" width="75" height="22" uuid="809a3222-6505-45f1-a2ae-005157899603"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{pet_name}]]></textFieldExpression></textField>
+            <textField><reportElement x="305" y="0" width="90" height="22" uuid="36dd9578-cbcd-44bb-b1a9-8efbb37fcd7a"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{breed}]]></textFieldExpression></textField>
+            <textField><reportElement x="395" y="0" width="50" height="22" uuid="21a333f2-b21a-407d-a5d4-0e33a57959dd"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{kennel_code}]]></textFieldExpression></textField>
+            <textField pattern="yyyy-MM-dd"><reportElement x="445" y="0" width="72" height="22" uuid="a48ed7e4-f115-4cad-9c22-e1cecd4d6d33"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{check_in}]]></textFieldExpression></textField>
+            <textField pattern="yyyy-MM-dd"><reportElement x="517" y="0" width="72" height="22" uuid="51880917-b6a9-46e8-b076-cb74b7cb99a9"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{check_out}]]></textFieldExpression></textField>
+            <textField><reportElement x="589" y="0" width="60" height="22" uuid="705e58e5-d51d-466e-ba22-efd61466db45"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{status}]]></textFieldExpression></textField>
+            <textField pattern="#,##0.00"><reportElement x="649" y="0" width="52" height="22" uuid="09ce5d00-d9b8-4d5a-95b0-798cb5c576f2"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{reservation_amount}]]></textFieldExpression></textField>
+            <textField pattern="#,##0.00"><reportElement x="701" y="0" width="52" height="22" uuid="e74bf331-04a3-426d-83ca-e7278aa8105e"/><textElement verticalAlignment="Middle"><font size="8"/></textElement><textFieldExpression><![CDATA[$F{paid_amount}]]></textFieldExpression></textField>
+            <textField><reportElement x="753" y="0" width="49" height="22" uuid="ca189841-d9a8-416f-9cfb-e7d4dd666b19"/><textElement verticalAlignment="Middle"><font size="7"/></textElement><textFieldExpression><![CDATA[$F{payment_status}]]></textFieldExpression></textField>
+        </band>
+    </detail>
+
+
+
+
+    <pageFooter>
+        <band height="20">
+            <textField>
+                <reportElement x="680" y="0" width="122" height="18" forecolor="#607589" uuid="3f1c0a91-23bf-4b31-82bd-a7c1efad86e1"/>
+                <textElement textAlignment="Right"><font size="8"/></textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+    <summary>
+        <band height="48">
+            <line><reportElement x="0" y="0" width="802" height="1" uuid="0513dc79-f718-405a-8ac5-53895e8a022c"/></line>
+            <staticText>
+                <reportElement x="450" y="8" width="140" height="18" uuid="2e82d04e-9db0-4ed6-b0b6-6770f0d411db"/>
+                <textElement textAlignment="Right"><font size="9" isBold="true"/></textElement>
+                <text><![CDATA[Grand Total / Paid:]]></text>
+            </staticText>
+            <textField pattern="#,##0.00">
+                <reportElement x="590" y="8" width="100" height="18" uuid="480ada53-b9a0-481a-9814-2a9f4bfd7590"/>
+                <textElement textAlignment="Right"><font size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$V{TotalReservationAmount}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="692" y="8" width="110" height="18" uuid="4475a30a-dc85-45b9-bcf9-51b48a994d31"/>
+                <textElement textAlignment="Right"><font size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$V{TotalPaidAmount}]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+
+</jasperReport>

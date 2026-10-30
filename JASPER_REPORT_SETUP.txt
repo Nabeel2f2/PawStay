@@ -1,0 +1,22 @@
+PAWSTAY JASPER REPORT SETUP
+============================
+
+1. Open this Maven project in NetBeans.
+2. Make sure MySQL is running and the credentials in Database.java are correct.
+3. Run the project using Main.java. The application now starts with design.java, the same NetBeans GUI Builder login shown in Design view.
+4. Login using the credentials configured in design.java (Manager/Admin/Cashier).
+5. In dashboard.java click Reports.
+6. The Reports button generates reports/PawStay_Reservation_Report.pdf and opens it.
+
+REPORT DATA
+-----------
+The JasperReports template joins FOUR tables:
+  reservations -> customers
+  reservations -> pets
+  reservations -> payments
+
+Payments are aggregated by reservation, so multiple payment rows do not duplicate a reservation.
+
+IMPORTANT
+---------
+All JasperReports UUID attributes are valid UUID values. Invalid short values such as "b01" cause JRXmlLoader/SAX parsing errors and have been removed/replaced.
